@@ -1,0 +1,20 @@
+# Streaming Diarization Evaluation Configuration
+
+# Dataset configuration
+dataset:
+  name: test                           # Dataset type: 'test', 'callhome', or 'ami'
+  path: data                           # Path to dataset root / cache dir
+  # language: eng                      # For CallHome: 'eng', 'deu', etc.
+  # recordings: [0, 1, 2]              # Optional: specific recording indices
+
+# Systems to evaluate
+systems:
+  - name: diart                        # System identifier
+    chunk_size: 0.5                    # Chunk duration in seconds
+
+# Evaluation settings
+evaluation:
+  collar: 0.25                         # Forgiveness collar for DER (seconds)
+
+# Output configuration
+output_dir: ./results/experiment_001   # Directory for results

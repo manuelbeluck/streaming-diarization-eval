@@ -1,0 +1,21 @@
+# ============================
+# Streaming Sortformer (NeMo ASR)
+# ============================
+
+git+https://github.com/NVIDIA/NeMo.git@557177a18d080867eb24c800c2a334002f9f9fc3#egg=nemo_toolkit[asr]
+
+# Torch stack (must match your working env)
+torch==2.10.0
+torchaudio==2.10.0
+pytorch-lightning==2.6.1
+torchmetrics==1.8.2
+
+# Evaluation
+pyannote-core==6.0.1
+pyannote-database==6.1.1
+pyannote-metrics==4.0.0
+
+# Optional
+optuna==4.7.0
+tqdm==4.67.3
+soundfile==0.13.1
