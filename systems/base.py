@@ -1,7 +1,7 @@
 """Abstract base class for streaming diarization systems."""
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import list, Optional
 import numpy as np
 
 from dataset.base import Segment
@@ -20,7 +20,7 @@ class StreamingDiarizationSystem(ABC):
         self.name = name
     
     @abstractmethod
-    def run(self, audio: np.ndarray, sample_rate: int, num_speakers: Optional[int] = None) -> List[Segment]:
+    def run(self, audio: np.ndarray, sample_rate: int, num_speakers: Optional[int] = None) -> list[Segment]:
         """
         Run diarization on full audio. Systems handle their own chunking.
         

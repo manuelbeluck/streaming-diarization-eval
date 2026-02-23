@@ -1,13 +1,12 @@
 """Diarization evaluation metrics: DER and JER."""
 
-from typing import List, Dict, Tuple
 import numpy as np
 
 from dataset.base import Segment
 
 
-def compute_der(hypothesis: List[Segment], reference: List[Segment], 
-                collar: float = 0.25) -> Dict[str, float]:
+def compute_der(hypothesis: list[Segment], reference: list[Segment], 
+                collar: float = 0.25) -> dict[str, float]:
     """
     Compute Diarization Error Rate (DER).
     
@@ -55,7 +54,7 @@ def compute_der(hypothesis: List[Segment], reference: List[Segment],
     }
 
 
-def compute_jer(hypothesis: List[Segment], reference: List[Segment], 
+def compute_jer(hypothesis: list[Segment], reference: list[Segment], 
                 collar: float = 0.25) -> float:
     """
     Compute Jaccard Error Rate (JER).
@@ -95,7 +94,7 @@ def compute_jer(hypothesis: List[Segment], reference: List[Segment],
     return jer
 
 
-def simple_der(hypothesis: List[Segment], reference: List[Segment],
+def simple_der(hypothesis: list[Segment], reference: list[Segment],
                step: float = 0.01) -> float:
     """
     Simple DER implementation without pyannote dependency.

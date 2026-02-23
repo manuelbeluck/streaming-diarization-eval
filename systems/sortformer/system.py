@@ -1,6 +1,6 @@
 """Adapter for Sortformer streaming diarization system."""
 
-from typing import List, Optional
+from typing import list, Optional
 import numpy as np
 
 from systems.base import StreamingDiarizationSystem
@@ -23,7 +23,7 @@ class SortformerSystem(StreamingDiarizationSystem):
         self.sample_rate = None
         self.accumulated_segments = []
     
-    def run(self, audio: np.ndarray, sample_rate: int, num_speakers: Optional[int] = None) -> List[Segment]:
+    def run(self, audio: np.ndarray, sample_rate: int, num_speakers: Optional[int] = None) -> list[Segment]:
         """Run Sortformer on full audio, handling chunking internally."""
         self.sample_rate = sample_rate
         self.accumulated_segments = []

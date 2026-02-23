@@ -1,12 +1,11 @@
 """Utility functions for dataset handling."""
 
-from typing import List, Tuple
 import numpy as np
 
 from .base import Segment
 
 
-def load_audio(path: str, target_sr: int = 16000) -> Tuple[np.ndarray, int]:
+def load_audio(path: str, target_sr: int = 16000) -> tuple[np.ndarray, int]:
     """
     Load audio file and resample if needed.
     
@@ -39,11 +38,14 @@ def load_audio(path: str, target_sr: int = 16000) -> Tuple[np.ndarray, int]:
             sr = target_sr
         except ImportError:
             raise ImportError("scipy required for resampling. Install: pip install scipy")
+        
+    if not isinstance(audio, np.ndarray):
+        raise ValueError(f"Audio loading failed for {path}, Got type {type(audio)}")
     
     return audio, sr
 
 
-def parse_rttm(path: str) -> List[Segment]:
+def parse_rttm(path: str) -> list[Segment]:
     """
     Parse RTTM (Rich Transcription Time Marked) file.
     
@@ -54,7 +56,7 @@ def parse_rttm(path: str) -> List[Segment]:
         path: Path to RTTM file
         
     Returns:
-        List of segments
+        list of segments
     """
     segments = []
     
@@ -83,12 +85,12 @@ def parse_rttm(path: str) -> List[Segment]:
     return segments
 
 
-def write_rttm(segments: List[Segment], path: str, recording_id: str = "recording"):
+def write_rttm(segments: list[Segment], path: str, recording_id: str = "recording"):
     """
     Write segments to RTTM format.
     
     Args:
-        segments: List of segments to write
+        segments: list of segments to write
         path: Output path
         recording_id: Recording identifier for RTTM file
     """

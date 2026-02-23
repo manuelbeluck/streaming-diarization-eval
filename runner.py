@@ -1,13 +1,12 @@
 """Main orchestrator for streaming diarization evaluation pipeline."""
 
 import argparse
-import yaml
 from pathlib import Path
-from typing import Dict, List
 import logging
 
 import numpy as np
 
+from config import Config, DatasetConfig, SystemConfig, load_config
 from dataset.base import DatasetProvider, Recording, Segment
 from dataset.utils import write_rttm
 from systems.base import StreamingDiarizationSystem
@@ -23,40 +22,36 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_config(config_path: str) -> Dict:
-    """Load configuration from YAML file."""
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-def create_dataset(config: Dict) -> DatasetProvider:
+def create_dataset(config: DatasetConfig) -> DatasetProvider:
     """Create dataset provider from configuration."""
-    dataset_type = config['name'].lower()
+    dataset_type = config.name.lower()
     
     if dataset_type == 'test':
         from dataset.testdataset import TestDataset
-        return TestDataset(data_dir=config.get('path', 'data'))
+        return TestDataset(
+            data_dir=config.path,
+            max_duration=config.max_duration
+        )
     elif dataset_type == 'callhome':
         from dataset.callhome import CallHomeDataset
         return CallHomeDataset(
-            language=config.get('language', 'eng'),
-            data_dir=config.get('path', 'data/callhome'),
-            recordings=config.get('recordings')
+            language=config.language,
+            data_dir=config.path,
+            recordings=config.recordings,
+            max_duration=config.max_duration
         )
     else:
         raise ValueError(f"Unknown dataset type: {dataset_type}")
 
 
-def create_system(config: Dict) -> StreamingDiarizationSystem:
+def create_system(config: SystemConfig) -> StreamingDiarizationSystem:
     """Create system from configuration."""
-    system_name = config['name'].lower()
-    chunk_size = config.get('chunk_size', 0.5)
+    system_name = config.name.lower()
     
     if system_name == 'diart':
-        return DiartSystem(chunk_size=chunk_size)
+        return DiartSystem(chunk_size=config.chunk_size)
     elif system_name == 'sortformer':
-        return SortformerSystem(chunk_size=chunk_size)
+        return SortformerSystem(chunk_size=config.chunk_size)
     else:
         raise ValueError(f"Unknown system: {system_name}")
 
@@ -65,7 +60,7 @@ def run_system_evaluation(
     system: StreamingDiarizationSystem,
     recording: Recording,
     audio: np.ndarray
-) -> List[Segment]:
+) -> list[Segment]:
     """Run system evaluation for one recording."""
     logger.info(f"Processing {recording.recording_id} with {system.name}")
     prediction = system.run(
@@ -82,7 +77,7 @@ def evaluate_system(
     dataset: DatasetProvider,
     output_dir: Path,
     collar: float
-) -> List[Dict]:
+) -> list[dict]:
     """
     Evaluate system on entire dataset.
     
@@ -136,7 +131,7 @@ def evaluate_system(
     return results
 
 
-def save_results(results: List[Dict], output_path: Path):
+def save_results(results: list[dict], output_path: Path):
     """Save results to CSV file."""
     import csv
     
@@ -167,7 +162,7 @@ def main():
         'config',
         type=str,
         nargs='?',
-        default='config.yaml',
+        default='config_callhome.yaml',
         help='Path to configuration YAML file. Default: config.yaml'
     )
     args = parser.parse_args()
@@ -177,23 +172,23 @@ def main():
     config = load_config(args.config)
     
     # Create output directory
-    output_dir = Path(config.get('output_dir', './results'))
+    output_dir = Path(config.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
     
     # Create dataset
     logger.info("Initializing dataset...")
-    dataset = create_dataset(config['dataset'])
+    dataset = create_dataset(config.dataset)
     recordings = dataset.list_recordings()
     logger.info(f"Found {len(recordings)} recordings")
     
     # Create systems
     logger.info("Initializing systems...")
-    systems = [create_system(sys_config) for sys_config in config['systems']]
+    systems = [create_system(sys_config) for sys_config in config.systems]
     logger.info(f"Loaded {len(systems)} systems: {[s.name for s in systems]}")
     
     # Evaluation parameters
-    collar = config.get('evaluation', {}).get('collar', 0.25)
+    collar = config.evaluation.collar
     
     # Evaluate each system
     all_results = []

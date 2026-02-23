@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Iterator, Optional
+from typing import Iterator
 import numpy as np
 
 
@@ -20,14 +20,14 @@ class Recording:
     recording_id: str
     duration: float  # Total duration in seconds
     sample_rate: int
-    num_speakers: Optional[int] = None
+    num_speakers: int | None = None
 
 
 class DatasetProvider(ABC):
     """Abstract interface for dataset access."""
     
     @abstractmethod
-    def list_recordings(self) -> List[Recording]:
+    def list_recordings(self) -> list[Recording]:
         """Return list of all available recordings."""
         pass
     
@@ -42,38 +42,11 @@ class DatasetProvider(ABC):
         pass
     
     @abstractmethod
-    def get_ground_truth(self, recording_id: str) -> List[Segment]:
+    def get_ground_truth(self, recording_id: str) -> list[Segment]:
         """
         Load reference diarization (ground truth).
         
         Returns:
-            List of segments with speaker labels
+            list of segments with speaker labels
         """
         pass
-    
-    def chunk_audio(self, audio: np.ndarray, sample_rate: int, 
-                    chunk_size: float, overlap: float = 0.0) -> Iterator[tuple[np.ndarray, float]]:
-        """
-        Split audio into chunks for streaming simulation.
-        
-        Args:
-            audio: Audio array
-            sample_rate: Sample rate in Hz
-            chunk_size: Chunk duration in seconds
-            overlap: Overlap between chunks in seconds
-            
-        Yields:
-            (audio_chunk, timestamp) tuples
-        """
-        chunk_samples = int(chunk_size * sample_rate)
-        step_samples = int((chunk_size - overlap) * sample_rate)
-        
-        for start in range(0, len(audio), step_samples):
-            end = min(start + chunk_samples, len(audio))
-            chunk = audio[start:end]
-            timestamp = start / sample_rate
-            
-            yield chunk, timestamp
-            
-            if end >= len(audio):
-                break
