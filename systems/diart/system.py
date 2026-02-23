@@ -6,8 +6,8 @@ from pathlib import Path
 import tempfile
 
 from systems.base import StreamingDiarizationSystem
-from datasets.base import Segment
-from datasets.utils import parse_rttm
+from dataset.base import Segment
+from dataset.utils import parse_rttm
 
 
 class DiartSystem(StreamingDiarizationSystem):

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 import numpy as np
 
-from datasets.base import DatasetProvider, Recording, Segment
+from dataset.base import DatasetProvider, Recording, Segment
 
 
 class CallHomeDataset(DatasetProvider):
@@ -39,9 +39,8 @@ class CallHomeDataset(DatasetProvider):
             print(f"Loading CallHome ({self.language}) from HuggingFace...")
             self._dataset = load_dataset(
                 "talkbank/callhome", 
-                self.language, 
-                split="data",
-                cache_dir=str(self.data_dir)
+                self.language,
+                split="data"
             )
             print(f"Loaded {len(self._dataset)} recordings")
         return self._dataset
@@ -63,7 +62,7 @@ class CallHomeDataset(DatasetProvider):
             
             sample = dataset[idx]
             
-            # Get duration from timestamps
+            # Get duration from timestamps (avoid accessing audio to prevent torchaudio import)
             if sample["timestamps_end"]:
                 duration = max(sample["timestamps_end"])
             else:
@@ -72,8 +71,8 @@ class CallHomeDataset(DatasetProvider):
             # Get number of unique speakers
             num_speakers = len(set(sample["speakers"])) if sample["speakers"] else None
             
-            # Sample rate from audio
-            sample_rate = sample["audio"]["sampling_rate"] if "audio" in sample else 16000
+            # Use default sample rate (CallHome is 8kHz)
+            sample_rate = 8000
             
             recording_id = f"callhome_{self.language}_{idx:04d}"
             

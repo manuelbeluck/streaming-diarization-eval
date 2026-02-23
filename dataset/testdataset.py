@@ -6,8 +6,8 @@ from typing import List, Optional
 import numpy as np
 import urllib.request
 
-from datasets.base import DatasetProvider, Recording, Segment
-from datasets.utils import load_audio, parse_rttm
+from dataset.base import DatasetProvider, Recording, Segment
+from dataset.utils import load_audio, parse_rttm
 
 class TestDataset(DatasetProvider):
     """Dataset provider for a single test file (an4_diarize_test.wav)."""

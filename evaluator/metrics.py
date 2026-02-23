@@ -3,7 +3,7 @@
 from typing import List, Dict, Tuple
 import numpy as np
 
-from datasets.base import Segment
+from dataset.base import Segment
 
 
 def compute_der(hypothesis: List[Segment], reference: List[Segment], 

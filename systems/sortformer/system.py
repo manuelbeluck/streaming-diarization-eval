@@ -4,7 +4,7 @@ from typing import List, Optional
 import numpy as np
 
 from systems.base import StreamingDiarizationSystem
-from datasets.base import Segment
+from dataset.base import Segment
 
 
 class SortformerSystem(StreamingDiarizationSystem):

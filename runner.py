@@ -8,8 +8,8 @@ import logging
 
 import numpy as np
 
-from datasets.base import DatasetProvider, Recording, Segment
-from datasets.utils import write_rttm
+from dataset.base import DatasetProvider, Recording, Segment
+from dataset.utils import write_rttm
 from systems.base import StreamingDiarizationSystem
 from systems.diart.system import DiartSystem
 from systems.sortformer.system import SortformerSystem
@@ -35,10 +35,10 @@ def create_dataset(config: Dict) -> DatasetProvider:
     dataset_type = config['name'].lower()
     
     if dataset_type == 'test':
-        from datasets.testdataset import TestDataset
+        from dataset.testdataset import TestDataset
         return TestDataset(data_dir=config.get('path', 'data'))
     elif dataset_type == 'callhome':
-        from datasets.callhome import CallHomeDataset
+        from dataset.callhome import CallHomeDataset
         return CallHomeDataset(
             language=config.get('language', 'eng'),
             data_dir=config.get('path', 'data/callhome'),
@@ -101,55 +101,38 @@ def evaluate_system(
     results = []
     
     for recording in dataset.list_recordings():
-        try:
-            # Load audio and ground truth
-            audio = dataset.get_audio(recording.recording_id)
-            ground_truth = dataset.get_ground_truth(recording.recording_id)
+        # Load audio and ground truth
+        audio = dataset.get_audio(recording.recording_id)
+        ground_truth = dataset.get_ground_truth(recording.recording_id)
+        
+        # Run system
+        prediction = run_system_evaluation(system, recording, audio)
+        
+        # Save prediction
+        pred_path = system_dir / f"{recording.recording_id}.rttm"
+        write_rttm(prediction, str(pred_path), recording.recording_id)
+        
+        # Compute metrics
+        der_result = compute_der(prediction, ground_truth, collar=collar)
+        jer = compute_jer(prediction, ground_truth, collar=collar)
+        
+        result = {
+            'recording_id': recording.recording_id,
+            'system': system.name,
+            'DER': der_result['DER'],
+            'false_alarm': der_result['false_alarm'],
+            'missed_detection': der_result['missed_detection'],
+            'confusion': der_result['confusion'],
+            'JER': jer,
+            'duration': recording.duration,
+            'num_speakers': recording.num_speakers
+        }
+        
+        logger.info(f"  DER: {der_result['DER']:.3f}, JER: {jer:.3f}")
             
-            # Run system
-            prediction = run_system_evaluation(system, recording, audio)
+        
+        results.append(result)
             
-            # Save prediction
-            pred_path = system_dir / f"{recording.recording_id}.rttm"
-            write_rttm(prediction, str(pred_path), recording.recording_id)
-            
-            # Compute metrics
-            try:
-                der_result = compute_der(prediction, ground_truth, collar=collar)
-                jer = compute_jer(prediction, ground_truth, collar=collar)
-                
-                result = {
-                    'recording_id': recording.recording_id,
-                    'system': system.name,
-                    'DER': der_result['DER'],
-                    'false_alarm': der_result['false_alarm'],
-                    'missed_detection': der_result['missed_detection'],
-                    'confusion': der_result['confusion'],
-                    'JER': jer,
-                    'duration': recording.duration,
-                    'num_speakers': recording.num_speakers
-                }
-                
-                logger.info(f"  DER: {der_result['DER']:.3f}, JER: {jer:.3f}")
-                
-            except Exception as e:
-                logger.error(f"Error computing metrics for {recording.recording_id}: {e}")
-                result = {
-                    'recording_id': recording.recording_id,
-                    'system': system.name,
-                    'error': str(e)
-                }
-            
-            results.append(result)
-            
-        except Exception as e:
-            logger.error(f"Error processing {recording.recording_id}: {e}")
-            results.append({
-                'recording_id': recording.recording_id,
-                'system': system.name,
-                'error': str(e)
-            })
-    
     return results
 
 

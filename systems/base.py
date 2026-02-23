@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 import numpy as np
 
-from datasets.base import Segment
+from dataset.base import Segment
 
 
 class StreamingDiarizationSystem(ABC):
