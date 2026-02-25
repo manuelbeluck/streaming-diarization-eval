@@ -4,44 +4,43 @@
 dataset:
   name: test                           # Dataset type: 'test', 'callhome'
   path: data                           # Path to dataset root / cache dir
-  # language: eng                      # For CallHome: 'eng', 'deu', etc.
-  # recordings: [0, 1, 2]              # Optional: specific recording indices
-  # max_duration: 60                   # Optional: limit each recording to N seconds
+  language: eng                      # For CallHome: 'eng', 'deu', etc.
+  recordings: [0, 1, 2]              # Optional: specific recording indices
+  max_duration: 10                   # Optional: limit each recording to N seconds
 
 # Systems to evaluate
 systems:
   # DIART with default models (pyannote/segmentation, pyannote/embedding)
-  # - name: diart_default
-  #   duration: 5.0    # Processing window duration in seconds
-  #   step: 0.5        # Step size between windows in seconds
+  - name: diart_default
+    duration: 5.0    # Processing window duration in seconds
+    step: 0.5        # Step size between windows in seconds
   
-  # # DIART with custom models (pyannote/segmentation-3.0, pyannote/wespeaker-voxceleb-resnet34-LM)
-  # - name: diart_custom
-  #   duration: 5.0
-  #   step: 0.5
+  # DIART with custom models (pyannote/segmentation-3.0, pyannote/wespeaker-voxceleb-resnet34-LM)
+  - name: diart_custom
+    duration: 5.0
+    step: 0.5
 
   # Sortformer streaming diarization
+  - name: streaming_sortformer
+    chunk_len: 10                    # Number of frames in processing chunk
+    subsampling_factor: 10           # Subsampling factor
+    chunk_right_context: 0           # Right context frames
+    chunk_left_context: 10           # Left context frames
+    spkcache_len: 188                # Speaker cache length
+    fifo_len: 188                    # FIFO buffer length
+    spkcache_update_period: 144      # Speaker cache update period
+    log: false                       # Enable logging
+
   # - name: streaming_sortformer
-  #   chunk_len: 10                    # Number of frames in processing chunk
-  #   subsampling_factor: 10           # Subsampling factor
-  #   chunk_right_context: 0           # Right context frames
-  #   chunk_left_context: 10           # Left context frames
+  #   chunk_len: 6                    # Number of frames in processing chunk
+  #   subsampling_factor: 8           # Subsampling factor
+  #   chunk_right_context: 7           # Right context frames
+  #   chunk_left_context: 1           # Left context frames
   #   spkcache_len: 188                # Speaker cache length
   #   fifo_len: 188                    # FIFO buffer length
   #   spkcache_update_period: 144      # Speaker cache update period
   #   log: false                       # Enable logging
   #   # chunk_size: 1.0                # Optional: input chunk size (if not set, uses model's natural chunk duration)
-
-  - name: streaming_sortformer
-    chunk_len: 6                    # Number of frames in processing chunk
-    subsampling_factor: 8           # Subsampling factor
-    chunk_right_context: 7           # Right context frames
-    chunk_left_context: 1           # Left context frames
-    spkcache_len: 188                # Speaker cache length
-    fifo_len: 188                    # FIFO buffer length
-    spkcache_update_period: 144      # Speaker cache update period
-    log: false                       # Enable logging
-    # chunk_size: 1.0                # Optional: input chunk size (if not set, uses model's natural chunk duration)
 
 
 # Evaluation settings

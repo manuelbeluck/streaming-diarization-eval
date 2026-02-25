@@ -7,6 +7,7 @@ import os
 os.environ['TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD'] = '1'
 
 import argparse
+from dataclasses import dataclass, asdict
 from pathlib import Path
 import logging
 
@@ -24,6 +25,76 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class EvaluationResult:
+    """Results from evaluating a system on a recording."""
+    recording_id: str
+    system: str
+    DER: float
+    false_alarm: float
+    missed_detection: float
+    confusion: float
+    JER: float
+    latency_mean_ms: float
+    latency_std_ms: float
+    latency_first_chunk_ms: float
+    num_chunks: int
+    step_size_ms: float
+    duration: float
+    
+    def to_dict(self) -> dict[str, str | float | int]:
+        """Convert to dictionary for CSV writing."""
+        return asdict(self)
+    
+    @classmethod
+    def get_csv_headers(cls) -> list[str]:
+        """Get CSV column headers."""
+        return [
+            'recording_id', 'system', 'DER', 'false_alarm', 'missed_detection', 
+            'confusion', 'JER', 'latency_mean_ms', 'latency_std_ms', 
+            'latency_first_chunk_ms', 'num_chunks', 'step_size_ms', 'duration'
+        ]
+
+
+@dataclass
+class EvaluationSummary:
+    """Summary statistics across multiple evaluation results."""
+    system: str
+    num_recordings: int
+    avg_der: float
+    avg_jer: float
+    avg_latency_ms: float
+    avg_latency_std_ms: float
+    avg_first_chunk_ms: float
+    total_chunks: int
+    
+    @classmethod
+    def from_results(cls, system_name: str, results: list[EvaluationResult]) -> 'EvaluationSummary':
+        """Compute summary statistics from a list of results."""
+        if not results:
+            raise ValueError("Cannot create summary from empty results list")
+        
+        return cls(
+            system=system_name,
+            num_recordings=len(results),
+            avg_der=sum(r.DER for r in results) / len(results),
+            avg_jer=sum(r.JER for r in results) / len(results),
+            avg_latency_ms=sum(r.latency_mean_ms for r in results) / len(results),
+            avg_latency_std_ms=sum(r.latency_std_ms for r in results) / len(results),
+            avg_first_chunk_ms=sum(r.latency_first_chunk_ms for r in results) / len(results),
+            total_chunks=sum(r.num_chunks for r in results)
+        )
+    
+    def log_summary(self, logger_func) -> None:
+        """Log summary statistics."""
+        logger_func(f"{self.system}:")
+        logger_func(f"  Average DER: {self.avg_der:.3f}")
+        logger_func(f"  Average JER: {self.avg_jer:.3f}")
+        logger_func(f"  Average Chunk Processing Latency: {self.avg_latency_ms:.2f}±{self.avg_latency_std_ms:.2f}ms (first: {self.avg_first_chunk_ms:.2f}ms)")
+        logger_func(f"  Total Chunks: {self.total_chunks}")
+        logger_func(f"  Processed: {self.num_recordings} recordings")
 
 
 def create_dataset(config: DatasetConfig) -> DatasetProvider:
@@ -106,7 +177,7 @@ def evaluate_system(
     dataset: DatasetProvider,
     output_dir: Path,
     collar: float
-) -> list[dict]:
+) -> list[EvaluationResult]:
     """
     Evaluate system on entire dataset.
     
@@ -117,7 +188,7 @@ def evaluate_system(
         collar: Collar for DER calculation
         
     Returns:
-        Dictionary of results
+        List of EvaluationResult objects
     """
     system_dir = output_dir / system.name
     system_dir.mkdir(parents=True, exist_ok=True)
@@ -145,25 +216,25 @@ def evaluate_system(
         step_or_chunk = getattr(system, 'step', None) or getattr(system, 'chunk_size', 0.0) or 0.0
         latency_stats = system.get_latency_stats()
         
-        result = {
-            'recording_id': recording.recording_id,
-            'system': system.name,
-            'DER': der_result['DER'],
-            'false_alarm': der_result['false_alarm'],
-            'missed_detection': der_result['missed_detection'],
-            'confusion': der_result['confusion'],
-            'JER': jer,
-            'latency_mean_ms': latency_stats['latency_mean_ms'],
-            'latency_std_ms': latency_stats['latency_std_ms'],
-            'latency_first_chunk_ms': latency_stats['latency_first_chunk_ms'],
-            'num_chunks': latency_stats['num_chunks'],
-            'step_size_ms': step_or_chunk * 1000 if step_or_chunk else 0.0,
-            'duration': recording.duration
-        }
+        result = EvaluationResult(
+            recording_id=recording.recording_id,
+            system=system.name,
+            DER=der_result['DER'],
+            false_alarm=der_result['false_alarm'],
+            missed_detection=der_result['missed_detection'],
+            confusion=der_result['confusion'],
+            JER=jer,
+            latency_mean_ms=latency_stats['latency_mean_ms'],
+            latency_std_ms=latency_stats['latency_std_ms'],
+            latency_first_chunk_ms=latency_stats['latency_first_chunk_ms'],
+            num_chunks=int(latency_stats['num_chunks']),
+            step_size_ms=step_or_chunk * 1000 if step_or_chunk else 0.0,
+            duration=recording.duration
+        )
         
-        logger.info(f"  DER: {der_result['DER']:.3f}, JER: {jer:.3f}")
-        logger.info(f"  Chunk Processing Latency: {latency_stats['latency_mean_ms']:.2f}±{latency_stats['latency_std_ms']:.2f}ms "
-                   f"(first: {latency_stats['latency_first_chunk_ms']:.2f}ms, {latency_stats['num_chunks']} chunks)")
+        logger.info(f"  DER: {result.DER:.3f}, JER: {result.JER:.3f}")
+        logger.info(f"  Chunk Processing Latency: {result.latency_mean_ms:.2f}±{result.latency_std_ms:.2f}ms "
+                   f"(first: {result.latency_first_chunk_ms:.2f}ms, {result.num_chunks} chunks)")
             
         
         results.append(result)
@@ -171,7 +242,7 @@ def evaluate_system(
     return results
 
 
-def save_results(results: list[dict], output_path: Path):
+def save_results(results: list[EvaluationResult], output_path: Path):
     """Save results to CSV file."""
     import csv
     
@@ -179,16 +250,14 @@ def save_results(results: list[dict], output_path: Path):
         logger.warning("No results to save")
         return
     
-    # Get all keys from all results
-    fieldnames = set()
-    for result in results:
-        fieldnames.update(result.keys())
-    fieldnames = sorted(fieldnames)
+    # Use EvaluationResult methods for CSV handling
+    fieldnames = EvaluationResult.get_csv_headers()
+    result_dicts = [result.to_dict() for result in results]
     
     with open(output_path, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(results)
+        writer.writerows(result_dicts)
     
     logger.info(f"Results saved to {output_path}")
 
@@ -231,11 +300,11 @@ def main():
     collar = config.evaluation.collar
     
     # Evaluate each system
-    all_results = []
+    all_results: list[EvaluationResult] = []
     for system in systems: # incase there are multiple systems, what i doubt, but just in case
-        logger.info(f"\n{'='*60}")
+        logger.info(f"{'='*30}")
         logger.info(f"Evaluating {system.name}")
-        logger.info(f"{'='*60}")
+        logger.info(f"{'='*30}")
         
         results = evaluate_system(
             system=system,
@@ -250,28 +319,16 @@ def main():
     save_results(all_results, results_path)
     
     # Print summary
-    logger.info(f"\n{'='*60}")
+    logger.info(f"{'='*30}")
     logger.info("SUMMARY")
-    logger.info(f"{'='*60}")
+    logger.info(f"{'='*30}")
     
     for system in systems:
-        system_results = [r for r in all_results if r.get('system') == system.name]
-        valid_results = [r for r in system_results if 'DER' in r]
+        system_results = [r for r in all_results if r.system == system.name]
         
-        if valid_results:
-            avg_der = sum(r['DER'] for r in valid_results) / len(valid_results)
-            avg_jer = sum(r['JER'] for r in valid_results) / len(valid_results)
-            avg_latency = sum(r.get('latency_mean_ms', 0) for r in valid_results) / len(valid_results)
-            avg_latency_std = sum(r.get('latency_std_ms', 0) for r in valid_results) / len(valid_results)
-            avg_first_chunk = sum(r.get('latency_first_chunk_ms', 0) for r in valid_results) / len(valid_results)
-            total_chunks = sum(r.get('num_chunks', 0) for r in valid_results)
-            
-            logger.info(f"{system.name}:")
-            logger.info(f"  Average DER: {avg_der:.3f}")
-            logger.info(f"  Average JER: {avg_jer:.3f}")
-            logger.info(f"  Average Chunk Processing Latency: {avg_latency:.2f}±{avg_latency_std:.2f}ms (first: {avg_first_chunk:.2f}ms)")
-            logger.info(f"  Total Chunks: {total_chunks}")
-            logger.info(f"  Processed: {len(valid_results)}/{len(system_results)} recordings")
+        if system_results:
+            summary = EvaluationSummary.from_results(system.name, system_results)
+            summary.log_summary(logger.info)
         else:
             logger.warning(f"{system.name}: No valid results")
     

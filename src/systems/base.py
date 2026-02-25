@@ -25,13 +25,13 @@ class StreamingDiarizationSystem(ABC):
         self.latencies.clear()
         self.first_chunk_latency = None
     
-    def get_latency_stats(self) -> dict[str, float]:
+    def get_latency_stats(self) -> dict[str, float | int]:
         """
         Get measured latency statistics.
         
         Returns:
-            Dictionary with mean, std, first chunk latency in milliseconds,
-            and number of chunks. Returns zero values if no latencies recorded.
+            Dictionary with mean, std, first chunk latency in milliseconds (float),
+            and number of chunks (int). Returns zero values if no latencies recorded.
         """
         if not self.latencies:
             return {
