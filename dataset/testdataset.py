@@ -35,13 +35,10 @@ class TestDataset(DatasetProvider):
             if self.max_duration is not None and duration > self.max_duration:
                 duration = self.max_duration
             
-            segments = self.get_ground_truth(self.recording_id)
-            num_speakers = len(set(seg.speaker for seg in segments)) if segments else None
             self._metadata_cache = [Recording(
                 recording_id=self.recording_id,
                 duration=duration,
-                sample_rate=sample_rate,
-                num_speakers=num_speakers
+                sample_rate=sample_rate
             )]
         return self._metadata_cache
 

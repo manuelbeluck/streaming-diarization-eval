@@ -18,7 +18,19 @@ class DatasetConfig:
 class SystemConfig:
     """System configuration."""
     name: str
-    chunk_size: float = 0.5
+    # DIART parameters
+    duration: float | None = None  # Processing window duration (DIART)
+    step: float | None = None  # Step size between windows (DIART)
+    # Sortformer parameters
+    chunk_size: float | None = None  # Input chunk size for feeding audio (Sortformer)
+    chunk_len: int | None = None  # Number of frames in processing chunk (Sortformer)
+    subsampling_factor: int | None = None  # Subsampling factor (Sortformer)
+    chunk_right_context: int | None = None  # Right context frames (Sortformer)
+    chunk_left_context: int | None = None  # Left context frames (Sortformer)
+    spkcache_len: int | None = None  # Speaker cache length (Sortformer)
+    fifo_len: int | None = None  # FIFO buffer length (Sortformer)
+    spkcache_update_period: int | None = None  # Speaker cache update period (Sortformer)
+    log: bool | None = None  # Enable logging (Sortformer)
 
 
 @dataclass
@@ -55,7 +67,11 @@ def load_config(config_path: str) -> Config:
     system_configs = [
         SystemConfig(
             name=sys['name'],
-            chunk_size=sys.get('chunk_size', 0.5)
+            duration=sys.get('duration'),
+            step=sys.get('step'),
+            chunk_size=sys.get('chunk_size'),
+            chunk_len=sys.get('chunk_len'),
+            subsampling_factor=sys.get('subsampling_factor')
         )
         for sys in config_dict['systems']
     ]

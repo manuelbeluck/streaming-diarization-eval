@@ -20,7 +20,6 @@ class Recording:
     recording_id: str
     duration: float  # Total duration in seconds
     sample_rate: int
-    num_speakers: int | None = None
 
 
 class DatasetProvider(ABC):

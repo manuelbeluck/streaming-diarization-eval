@@ -74,9 +74,6 @@ class CallHomeDataset(DatasetProvider):
             if self.max_duration is not None and duration > self.max_duration:
                 duration = self.max_duration
             
-            # Get number of unique speakers
-            num_speakers = len(set(sample["speakers"])) if sample["speakers"] else None
-            
             # Use default sample rate (CallHome is 8kHz)
             sample_rate = 8000
             
@@ -85,8 +82,7 @@ class CallHomeDataset(DatasetProvider):
             recordings.append(Recording(
                 recording_id=recording_id,
                 duration=duration,
-                sample_rate=sample_rate,
-                num_speakers=num_speakers
+                sample_rate=sample_rate
             ))
         
         self._metadata_cache = recordings

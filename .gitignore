@@ -6,6 +6,7 @@ ENV/
 */.venv/
 */venv/
 */env/
+venv-*/
 
 # Conda environments
 .conda/
@@ -16,3 +17,6 @@ conda-env/
 results/
 data/
 *.pyc
+
+*.rttm
+*.wav
