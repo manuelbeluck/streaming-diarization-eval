@@ -9,8 +9,8 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from systems.base import StreamingDiarizationSystem
-from dataset.base import Segment
+from src.systems.base import StreamingDiarizationSystem
+from src.dataset.base import Segment
 
 logger = logging.getLogger(__name__)
 

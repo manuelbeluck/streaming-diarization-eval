@@ -12,11 +12,11 @@ import logging
 
 import numpy as np
 
-from config import DatasetConfig, SystemConfig, load_config
-from dataset.base import DatasetProvider, Recording, Segment
-from dataset.utils import write_rttm
-from systems.base import StreamingDiarizationSystem
-from evaluator.metrics import compute_der, compute_jer
+from src.config import DatasetConfig, SystemConfig, load_config
+from src.dataset.base import DatasetProvider, Recording, Segment
+from src.dataset.utils import write_rttm
+from src.systems.base import StreamingDiarizationSystem
+from src.evaluator.metrics import compute_der, compute_jer
 
 # Setup logging
 logging.basicConfig(
@@ -31,13 +31,13 @@ def create_dataset(config: DatasetConfig) -> DatasetProvider:
     dataset_type = config.name.lower()
     
     if dataset_type == 'test':
-        from dataset.testdataset import TestDataset
+        from src.dataset.testdataset import TestDataset
         return TestDataset(
             data_dir=config.path,
             max_duration=config.max_duration
         )
     elif dataset_type == 'callhome':
-        from dataset.callhome import CallHomeDataset
+        from src.dataset.callhome import CallHomeDataset
         return CallHomeDataset(
             language=config.language,
             data_dir=config.path,
@@ -53,7 +53,7 @@ def create_system(config: SystemConfig) -> StreamingDiarizationSystem:
     system_name = config.name.lower()
     
     if system_name == 'diart_default':
-        from systems.diart.system import DiartSystem
+        from src.systems.diart.system import DiartSystem
         return DiartSystem(
             name='diart_default',
             duration=config.duration or 5.0,
@@ -61,7 +61,7 @@ def create_system(config: SystemConfig) -> StreamingDiarizationSystem:
             # Uses DIART default models
         )
     elif system_name == 'diart_custom':
-        from systems.diart.system import DiartSystem
+        from src.systems.diart.system import DiartSystem
         return DiartSystem(
             name='diart_custom',
             duration=config.duration or 5.0,
@@ -70,7 +70,7 @@ def create_system(config: SystemConfig) -> StreamingDiarizationSystem:
             embedding_model='pyannote/wespeaker-voxceleb-resnet34-LM'
         )
     elif system_name == 'streaming_sortformer':
-        from systems.sortformer.system import SortformerSystem
+        from src.systems.sortformer.system import SortformerSystem
         return SortformerSystem(
             chunk_len=config.chunk_len or 10,
             subsampling_factor=config.subsampling_factor or 10,

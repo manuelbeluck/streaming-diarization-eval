@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-from dataset.base import Segment
+from src.dataset.base import Segment
 
 
 class StreamingDiarizationSystem(ABC):

@@ -15,9 +15,9 @@ from diart.sources import FileAudioSource
 from diart.inference import StreamingInference
 from diart.sinks import RTTMWriter
 
-from systems.base import StreamingDiarizationSystem
-from dataset.base import Segment
-from dataset.utils import parse_rttm
+from src.systems.base import StreamingDiarizationSystem
+from src.dataset.base import Segment
+from src.dataset.utils import parse_rttm
 
 
 class PerfCounterChronometer:

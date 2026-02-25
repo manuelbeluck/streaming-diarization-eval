@@ -1,6 +1,6 @@
 """Diarization evaluation metrics: DER and JER."""
 
-from dataset.base import Segment
+from src.dataset.base import Segment
 from pyannote.core import Annotation, Segment as PySegment
 from pyannote.metrics.diarization import DiarizationErrorRate
 

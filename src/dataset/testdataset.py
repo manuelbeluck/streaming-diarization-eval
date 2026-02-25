@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import urllib.request
 
-from dataset.base import DatasetProvider, Recording, Segment
-from dataset.utils import load_audio, parse_rttm
+from src.dataset.base import DatasetProvider, Recording, Segment
+from src.dataset.utils import load_audio, parse_rttm
 
 class TestDataset(DatasetProvider):
     """Dataset provider for a single test file (an4_diarize_test.wav)."""

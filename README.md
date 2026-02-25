@@ -2,6 +2,38 @@
 
 Benchmark realtime speaker diarization systems (DIART, Streaming Sortformer) on standard datasets.
 
+## Quick Start
+
+### Running Evaluation
+
+```bash
+# Activate your virtual environment
+source venv-310/bin/activate  # Linux/Mac
+# or
+.\venv-310\Scripts\Activate.ps1  # Windows PowerShell
+
+# Run with default config
+python -m src.runner
+
+# Run with specific config
+python -m src.runner config_callhome.yaml
+```
+
+### Project Structure
+
+```
+streaming-diarization-eval/
+├── src/                    # Source code
+│   ├── runner.py          # Main evaluation orchestrator
+│   ├── config.py          # Configuration classes
+│   ├── dataset/           # Dataset providers
+│   ├── systems/           # Diarization system adapters
+│   └── evaluator/         # Metrics computation
+├── data/                  # Dataset cache
+├── config.yaml            # Configuration files
+└── results/               # Evaluation outputs
+```
+
 ## Windows Setup Notes
 
 ### TorchCodec Compatibility Issue

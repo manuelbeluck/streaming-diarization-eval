@@ -3,7 +3,7 @@
 from pathlib import Path
 import numpy as np
 
-from dataset.base import DatasetProvider, Recording, Segment
+from src.dataset.base import DatasetProvider, Recording, Segment
 
 
 class CallHomeDataset(DatasetProvider):
