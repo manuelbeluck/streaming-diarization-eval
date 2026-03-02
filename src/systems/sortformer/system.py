@@ -150,7 +150,8 @@ class SortformerDiarization:
  
 
 class SortformerDiarizationOnline:
-    def __init__(self, shared_model, sample_rate: int = 16000, latencies: list[float] | None = None):
+    def __init__(self, shared_model, sample_rate: int = 16000, latencies: list[float] | None = None,
+                 overlap_aware: bool = False):
         """
         Initialize the streaming Sortformer diarization system.
         
@@ -158,6 +159,7 @@ class SortformerDiarizationOnline:
             sample_rate: Audio sample rate (default: 16000)
             model_name: Pre-trained model name (default: "nvidia/diar_streaming_sortformer_4spk-v2")
             latencies: Optional list to store per-chunk latencies
+            overlap_aware: If True, emit overlapping segments when multiple speakers exceed threshold
         """
         self.sample_rate = sample_rate
         self.diarization_segments = []
@@ -169,6 +171,7 @@ class SortformerDiarizationOnline:
         self.latencies = latencies if latencies is not None else []
         self.first_chunk_latency: float | None = None
         self._is_first_chunk = True
+        self.overlap_aware = overlap_aware
                 
         self.diar_model = shared_model.diar_model
         
@@ -316,69 +319,102 @@ class SortformerDiarizationOnline:
             onset_threshold: Minimum confidence to start a new speaker segment
             offset_threshold: Minimum confidence to continue an existing speaker segment
         """
-        preds_np = self.total_preds[0].cpu().numpy()
+        preds_np = self.total_preds[0].cpu().numpy()  # (T_total, n_spk)
 
-        # Get speaker with max confidence per frame
-        active_speakers = np.argmax(preds_np, axis=1)
-        max_confidences = np.max(preds_np, axis=1)
-        
-        # Apply onset/offset thresholding: mark low-confidence frames as silence (-1)
-        current_speaker = -1  # Start with silence
-        for i in range(len(active_speakers)):
-            if current_speaker == -1:
-                # Need to exceed onset threshold to start speaking
-                if max_confidences[i] >= onset_threshold:
-                    current_speaker = active_speakers[i]
-                else:
-                    active_speakers[i] = -1  # Silence
-            else:
-                # Already speaking, need to stay above offset threshold
-                if max_confidences[i] >= offset_threshold and active_speakers[i] == current_speaker:
-                    # Continue with same speaker
-                    pass
-                elif max_confidences[i] >= onset_threshold:
-                    # Switch to new speaker if above onset threshold
-                    current_speaker = active_speakers[i]
-                else:
-                    # Drop below threshold = silence
-                    active_speakers[i] = -1
-                    current_speaker = -1
-        
         if self._len_prediction is None:
-            self._len_prediction = len(active_speakers)
-        
-        frame_duration = self.chunk_duration_seconds / self._len_prediction
-        current_chunk_preds = active_speakers[-self._len_prediction:]
-        
-        new_segments = []
+            self._len_prediction = preds_np.shape[0]
+
+        n = self._len_prediction
+        frame_duration = self.chunk_duration_seconds / n
 
         with self.segment_lock:
             base_time = self._chunk_index * self.chunk_duration_seconds + self.global_time_offset
             chunk_end_time = base_time + self.chunk_duration_seconds
-            current_spk = current_chunk_preds[0]
-            start_time = base_time
-            
-            for idx, spk in enumerate(current_chunk_preds):
-                current_time = base_time + idx * frame_duration
-                if spk != current_spk:
-                    # Save previous segment if it wasn't silence
-                    if current_spk != -1:
+
+            if not self.overlap_aware:
+                # ── single-speaker per frame (argmax) ────────────────────────
+                active_speakers = np.argmax(preds_np, axis=1)
+                max_confidences = np.max(preds_np, axis=1)
+
+                current_speaker = -1
+                for i in range(len(active_speakers)):
+                    if current_speaker == -1:
+                        if max_confidences[i] >= onset_threshold:
+                            current_speaker = active_speakers[i]
+                        else:
+                            active_speakers[i] = -1
+                    else:
+                        if max_confidences[i] >= offset_threshold and active_speakers[i] == current_speaker:
+                            pass
+                        elif max_confidences[i] >= onset_threshold:
+                            current_speaker = active_speakers[i]
+                        else:
+                            active_speakers[i] = -1
+                            current_speaker = -1
+
+                current_chunk_preds = active_speakers[-n:]
+                new_segments = []
+                current_spk = current_chunk_preds[0]
+                start_time = base_time
+
+                for idx, spk in enumerate(current_chunk_preds):
+                    current_time = base_time + idx * frame_duration
+                    if spk != current_spk:
+                        if current_spk != -1:
+                            new_segments.append(SpeakerSegment(
+                                speaker=current_spk, start=start_time, end=current_time
+                            ))
+                        start_time = current_time
+                        current_spk = spk
+
+                if current_spk != -1:
+                    new_segments.append(SpeakerSegment(
+                        speaker=current_spk, start=start_time, end=chunk_end_time
+                    ))
+                return new_segments
+
+            else:
+                # ── overlap-aware: independent onset/offset per speaker ───────
+                # Each speaker's activity is tracked independently; multiple
+                # speakers can be active simultaneously → overlapping segments.
+                n_spk = preds_np.shape[1]
+                speaker_active = np.zeros((preds_np.shape[0], n_spk), dtype=bool)
+                for s in range(n_spk):
+                    conf = preds_np[:, s]
+                    active = False
+                    for i, c in enumerate(conf):
+                        if not active:
+                            if c >= onset_threshold:
+                                active = True
+                        else:
+                            if c < offset_threshold:
+                                active = False
+                        speaker_active[i, s] = active
+
+                # Only emit segments for the current chunk slice
+                chunk_active = speaker_active[-n:, :]  # (n, n_spk)
+                new_segments = []
+
+                for s in range(n_spk):
+                    in_seg = False
+                    seg_start = base_time
+                    for idx, act in enumerate(chunk_active[:, s]):
+                        current_time = base_time + idx * frame_duration
+                        if act and not in_seg:
+                            seg_start = current_time
+                            in_seg = True
+                        elif not act and in_seg:
+                            new_segments.append(SpeakerSegment(
+                                speaker=s, start=seg_start, end=current_time
+                            ))
+                            in_seg = False
+                    if in_seg:
                         new_segments.append(SpeakerSegment(
-                            speaker=current_spk,
-                            start=start_time,
-                            end=current_time
+                            speaker=s, start=seg_start, end=chunk_end_time
                         ))
-                    start_time = current_time
-                    current_spk = spk
-            
-            # Add final segment if not silence
-            if current_spk != -1:
-                new_segments.append(SpeakerSegment(
-                    speaker=current_spk,
-                    start=start_time,
-                    end=chunk_end_time
-                ))
-        return new_segments
+
+                new_segments.sort(key=lambda seg: seg.start)
+                return new_segments
                 
     def get_segments(self) -> list[SpeakerSegment]:
         """Get a copy of the current speaker segments."""
@@ -410,7 +446,8 @@ class SortformerSystem(StreamingDiarizationSystem):
         fifo_len: int = 188,
         spkcache_update_period: int = 144,
         log: bool = False,
-        chunk_size: float | None = None
+        chunk_size: float | None = None,
+        overlap_aware: bool = False
     ):
         """
         Initialize Sortformer system.
@@ -426,6 +463,9 @@ class SortformerSystem(StreamingDiarizationSystem):
             spkcache_update_period: Speaker cache update period
             log: Enable logging
             chunk_size: Optional audio input chunk size in seconds. If None, uses model's natural chunk duration.
+            overlap_aware: If True, each speaker's activity is tracked independently and overlapping
+                           segments are emitted when multiple speakers exceed the threshold simultaneously.
+                           If False (default), only the highest-confidence speaker wins each frame.
         """
         super().__init__(name="streaming_sortformer")
         self.model_name = model_name
@@ -438,6 +478,7 @@ class SortformerSystem(StreamingDiarizationSystem):
         self.spkcache_update_period = spkcache_update_period
         self.log = log
         self.chunk_size = chunk_size  # Can be None, will be set after model is loaded
+        self.overlap_aware = overlap_aware
         
         # Initialize shared model on first use
         global _shared_sortformer_model
@@ -468,7 +509,8 @@ class SortformerSystem(StreamingDiarizationSystem):
         diarization = SortformerDiarizationOnline(
             shared_model=self.shared_model,
             sample_rate=sample_rate,
-            latencies=self.latencies
+            latencies=self.latencies,
+            overlap_aware=self.overlap_aware
         )
         
         # Use model's natural chunk duration if chunk_size not specified
@@ -491,31 +533,50 @@ class SortformerSystem(StreamingDiarizationSystem):
         # Merge consecutive segments with same speaker
         merged_segments = []
         if all_segments:
-            current_speaker = all_segments[0].speaker
-            current_start = all_segments[0].start
-            current_end = all_segments[0].end
-            
-            for segment in all_segments[1:]:
-                if segment.speaker == current_speaker:
-                    # Same speaker, extend the end time
-                    current_end = segment.end
-                else:
-                    # Speaker changed, save current segment and start new one
-                    merged_segments.append(SpeakerSegment(
-                        speaker=current_speaker,
-                        start=current_start,
-                        end=current_end
-                    ))
-                    current_speaker = segment.speaker
-                    current_start = segment.start
-                    current_end = segment.end
-            
-            # Add the last segment
-            merged_segments.append(SpeakerSegment(
-                speaker=current_speaker,
-                start=current_start,
-                end=current_end
-            ))
+            if self.overlap_aware:
+                # Per-speaker merge: group by speaker ID, merge within each
+                # speaker independently (handles overlapping output correctly)
+                from collections import defaultdict
+                by_speaker: dict[int, list[SpeakerSegment]] = defaultdict(list)
+                for seg in all_segments:
+                    by_speaker[seg.speaker].append(seg)  # type: ignore[arg-type]
+
+                for spk, segs in by_speaker.items():
+                    segs.sort(key=lambda s: s.start)
+                    cur = segs[0]
+                    for seg in segs[1:]:
+                        if seg.start <= cur.end:
+                            cur = SpeakerSegment(speaker=cur.speaker, start=cur.start,
+                                                 end=max(cur.end, seg.end))
+                        else:
+                            merged_segments.append(cur)
+                            cur = seg
+                    merged_segments.append(cur)
+
+                merged_segments.sort(key=lambda s: s.start)
+            else:
+                current_speaker = all_segments[0].speaker
+                current_start = all_segments[0].start
+                current_end = all_segments[0].end
+
+                for segment in all_segments[1:]:
+                    if segment.speaker == current_speaker:
+                        current_end = segment.end
+                    else:
+                        merged_segments.append(SpeakerSegment(
+                            speaker=current_speaker,
+                            start=current_start,
+                            end=current_end
+                        ))
+                        current_speaker = segment.speaker
+                        current_start = segment.start
+                        current_end = segment.end
+
+                merged_segments.append(SpeakerSegment(
+                    speaker=current_speaker,
+                    start=current_start,
+                    end=current_end
+                ))
         
         # Convert to Segment objects with string speaker labels
         result_segments = [

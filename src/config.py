@@ -31,6 +31,7 @@ class SystemConfig:
     fifo_len: int | None = None  # FIFO buffer length (Sortformer)
     spkcache_update_period: int | None = None  # Speaker cache update period (Sortformer)
     log: bool | None = None  # Enable logging (Sortformer)
+    overlap_aware: bool | None = None  # Emit overlapping segments when multiple speakers exceed threshold (Sortformer)
 
 
 @dataclass
@@ -63,6 +64,7 @@ def load_config(config_path: str) -> Config:
         max_duration=dataset_dict.get('max_duration')
     )
     
+    systems_dicts: list[dict] = config_dict['systems']
     # Parse system configs
     system_configs = [
         SystemConfig(
@@ -71,9 +73,16 @@ def load_config(config_path: str) -> Config:
             step=sys.get('step'),
             chunk_size=sys.get('chunk_size'),
             chunk_len=sys.get('chunk_len'),
-            subsampling_factor=sys.get('subsampling_factor')
+            subsampling_factor=sys.get('subsampling_factor'),
+            chunk_right_context=sys.get('chunk_right_context'),
+            chunk_left_context=sys.get('chunk_left_context'),
+            spkcache_len=sys.get('spkcache_len'),
+            fifo_len=sys.get('fifo_len'),
+            spkcache_update_period=sys.get('spkcache_update_period'),
+            log=sys.get('log'),
+            overlap_aware=sys.get('overlap_aware')
         )
-        for sys in config_dict['systems']
+        for sys in systems_dicts
     ]
     
     # Parse evaluation config

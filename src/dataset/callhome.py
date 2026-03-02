@@ -64,7 +64,7 @@ class CallHomeDataset(DatasetProvider):
             
             sample = dataset[idx]
             
-            # Get duration from timestamps (avoid accessing audio to prevent torchaudio import)
+            # Get duration from timestamps
             if sample["timestamps_end"]:
                 duration = max(sample["timestamps_end"])
             else:
@@ -74,8 +74,8 @@ class CallHomeDataset(DatasetProvider):
             if self.max_duration is not None and duration > self.max_duration:
                 duration = self.max_duration
             
-            # Use default sample rate (CallHome is 8kHz)
-            sample_rate = 8000
+            # HuggingFace datasets decodes CallHome audio at 16 kHz
+            sample_rate = 16000
             
             recording_id = f"callhome_{self.language}_{idx:04d}"
             

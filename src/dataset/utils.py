@@ -93,9 +93,17 @@ def write_rttm(segments: list[Segment], path: str, recording_id: str = "recordin
         segments: list of segments to write
         path: Output path
         recording_id: Recording identifier for RTTM file
+    
+    Note:
+        Timestamps are rounded to 10ms precision (0.01s) to match standard 
+        diarization annotation conventions and ground truth precision.
     """
     with open(path, 'w') as f:
         for seg in segments:
-            duration = seg.end - seg.start
+            # Round to 10ms precision (0.01 second increments)
+            start_rounded = round(seg.start, 2)
+            end_rounded = round(seg.end, 2)
+            duration = end_rounded - start_rounded
+            
             # RTTM format: SPEAKER <file> 1 <start> <duration> <NA> <NA> <speaker> <NA> <NA>
-            f.write(f"SPEAKER {recording_id} 1 {seg.start:.3f} {duration:.3f} <NA> <NA> {seg.speaker} <NA> <NA>\n")
+            f.write(f"SPEAKER {recording_id} 1 {start_rounded:.3f} {duration:.3f} <NA> <NA> {seg.speaker} <NA> <NA>\n")

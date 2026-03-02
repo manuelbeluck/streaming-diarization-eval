@@ -1,10 +1,13 @@
 """Adapter for DIART streaming diarization system."""
 
+import logging
 import numpy as np
 from pathlib import Path
 import tempfile
 import time
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 import torch
 import soundfile as sf
@@ -88,13 +91,16 @@ class DiartSystem(StreamingDiarizationSystem):
         self.embedding_model = embedding_model
         
         # Initialize pipeline with custom models and window parameters
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         config = SpeakerDiarizationConfig(
             segmentation=diart_models.SegmentationModel.from_pretrained(self.segmentation_model),
             embedding=diart_models.EmbeddingModel.from_pretrained(self.embedding_model),
             duration=duration,
             step=step,
+            device=device,
         )
         self.pipeline = SpeakerDiarization(config)
+        logger.info("DiartSystem running on %s", device)
     
     def run(self, audio: np.ndarray, sample_rate: int) -> list[Segment]:
         """Run DIART on full audio using DIART streaming inference."""
@@ -127,6 +133,7 @@ class DiartSystem(StreamingDiarizationSystem):
             
             # Replace DIART's chronometer (monotonic) with our perf_counter version
             chrono = PerfCounterChronometer()
+            #chrono = inference._chrono # type: ignore[assignment] test
             inference._chrono = chrono  # type: ignore[assignment]
             
             # Attach RTTM writer
