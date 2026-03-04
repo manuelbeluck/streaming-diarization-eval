@@ -9,9 +9,10 @@ import numpy as np
 @dataclass
 class Segment:
     """Represents a single speaker segment."""
-    start: float  # Start time in seconds
-    end: float    # End time in seconds
-    speaker: str  # Speaker label
+    start: float    # Start time in seconds
+    end: float      # End time in seconds
+    speaker: str    # Speaker label
+    confidence: float | None = None  # Model confidence (None = unavailable)
 
 
 @dataclass

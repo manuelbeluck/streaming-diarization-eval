@@ -5,7 +5,6 @@ import numpy as np
 from pathlib import Path
 import tempfile
 import time
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +137,8 @@ class DiartSystem(StreamingDiarizationSystem):
             
             # Attach RTTM writer
             inference.attach_observers(RTTMWriter(audio_source.uri, str(rttm_path)))
+            
+            # TODO: Extract confidence scores from DIART
             
             # Run inference
             try:

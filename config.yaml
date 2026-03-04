@@ -2,10 +2,10 @@
 
 # Dataset configuration
 dataset:
-  name: test                           # Dataset type: 'test', 'callhome'
+  name: test                          # Dataset type: 'test', 'callhome'
   path: data                           # Path to dataset root / cache dir
   language: eng                      # For CallHome: 'eng', 'deu', etc.
-  recordings: [0, 1, 2]              # Optional: specific recording indices
+  recordings: [0]              # Optional: specific recording indices
   max_duration: 10                   # Optional: limit each recording to N seconds
 
 # Systems to evaluate
@@ -40,7 +40,7 @@ systems:
   #   fifo_len: 188                    # FIFO buffer length
   #   spkcache_update_period: 144      # Speaker cache update period
   #   log: false                       # Enable logging
-  #   # chunk_size: 1.0                # Optional: input chunk size (if not set, uses model's natural chunk duration)
+    # chunk_size: 1.0                # Optional: input chunk size (if not set, uses model's natural chunk duration)
 
 
 # Evaluation settings

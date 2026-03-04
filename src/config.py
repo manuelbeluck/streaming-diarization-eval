@@ -31,7 +31,6 @@ class SystemConfig:
     fifo_len: int | None = None  # FIFO buffer length (Sortformer)
     spkcache_update_period: int | None = None  # Speaker cache update period (Sortformer)
     log: bool | None = None  # Enable logging (Sortformer)
-    overlap_aware: bool | None = None  # Emit overlapping segments when multiple speakers exceed threshold (Sortformer)
 
 
 @dataclass
@@ -80,7 +79,6 @@ def load_config(config_path: str) -> Config:
             fifo_len=sys.get('fifo_len'),
             spkcache_update_period=sys.get('spkcache_update_period'),
             log=sys.get('log'),
-            overlap_aware=sys.get('overlap_aware')
         )
         for sys in systems_dicts
     ]

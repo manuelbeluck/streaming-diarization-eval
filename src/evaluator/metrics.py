@@ -90,3 +90,41 @@ def compute_jer(hypothesis: list[Segment], reference: list[Segment],
     jer: float = metric(ref_annotation, hyp_annotation) # type: ignore
     
     return jer
+
+
+def compute_speaker_overlap_stats(
+    segments: list[Segment],
+    total_duration: float
+) -> dict:
+    """Compute speaker count and overlap rate from a set of diarization segments.
+
+    Args:
+        segments: Segment objects (must have .speaker, .start, .end)
+        total_duration: Total recording duration in seconds
+
+    Returns:
+        dict with keys: num_speakers (int), overlap_rate (float)
+    """
+    num_speakers = len(set(s.speaker for s in segments)) if segments else 0
+
+    # Overlap rate: fraction of total_duration where 2+ speakers are simultaneously active
+    overlap_time = 0.0
+    if total_duration > 0 and segments:
+        events: list[tuple[float, int]] = []
+        for seg in segments:
+            events.append((seg.start, +1))
+            events.append((seg.end, -1))
+        events.sort()
+        active = 0
+        prev_t = 0.0
+        for t, delta in events:
+            if active >= 2:
+                overlap_time += t - prev_t
+            prev_t = t
+            active += delta
+    overlap_rate = overlap_time / total_duration if total_duration > 0 else 0.0
+
+    return {
+        'num_speakers': num_speakers,
+        'overlap_rate': overlap_rate,
+    }
