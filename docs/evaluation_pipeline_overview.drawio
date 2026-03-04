@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Evaluation Pipeline" id="pipeline">
-        <mxGraphModel dx="1393" dy="884" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="627" dy="620" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#FFFFFF" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -112,45 +112,45 @@
                 <mxCell id="legend3" value="Processing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10" parent="1" vertex="1">
                     <mxGeometry x="40" y="870" width="100" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="3" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="2" target="load_config">
+                <mxCell id="3" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" parent="1" source="2" target="load_config" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="2" value="config.yaml" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#e1d5e7;strokeColor=#9673a6;size=18;" vertex="1" parent="1">
+                <mxCell id="2" value="config.yaml" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#e1d5e7;strokeColor=#9673a6;size=18;" parent="1" vertex="1">
                     <mxGeometry x="540" y="115" width="65" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="8" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" target="init_systems">
+                <mxCell id="8" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" parent="1" target="init_systems" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="540" y="350" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="5" value="System Factory" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+                <mxCell id="5" value="System Factory" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
                     <mxGeometry x="540" y="220" width="170" height="190" as="geometry"/>
                 </mxCell>
-                <mxCell id="6" value="StreamingSortformer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="5">
+                <mxCell id="6" value="StreamingSortformer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="5" vertex="1">
                     <mxGeometry x="25" y="40" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="7" value="DIART" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="5">
+                <mxCell id="7" value="DIART" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="5" vertex="1">
                     <mxGeometry x="25" y="110" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="12" style="edgeStyle=none;html=1;dashed=1;" edge="1" parent="1">
+                <mxCell id="12" style="edgeStyle=none;html=1;dashed=1;" parent="1" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="280" y="250" as="sourcePoint"/>
                         <mxPoint x="319" y="250" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9" value="Dataset Factory" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+                <mxCell id="9" value="Dataset Factory" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
                     <mxGeometry x="110" y="200" width="170" height="190" as="geometry"/>
                 </mxCell>
-                <mxCell id="10" value="CallhomeDataset&lt;div&gt;(HuggingFace)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="9">
+                <mxCell id="10" value="CallhomeDataset&lt;div&gt;(HuggingFace)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="9" vertex="1">
                     <mxGeometry x="25" y="40" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="11" value="TestDataset&lt;div&gt;(Only 1 record)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="9">
+                <mxCell id="11" value="TestDataset&lt;div&gt;(Only 1 record)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="9" vertex="1">
                     <mxGeometry x="25" y="110" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="16" value="dataset:&#xa;  name: test&#xa;   ...&#xa;systems:&#xa;  - name: diart_default&#xa;    ...&#xa;  - name: diart_custom&#xa;    ...&#xa;  - name: streaming_sortformer&#xa;    ..." style="text;whiteSpace=wrap;fontSize=9;spacing=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;rounded=0;" vertex="1" parent="1">
+                <mxCell id="16" value="dataset:&#xa;  name: test&#xa;   ...&#xa;systems:&#xa;  - name: diart_default&#xa;    ...&#xa;  - name: diart_custom&#xa;    ...&#xa;  - name: streaming_sortformer&#xa;    ..." style="text;whiteSpace=wrap;fontSize=9;spacing=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="640" y="80" width="130" height="120" as="geometry"/>
                 </mxCell>
-                <mxCell id="18" value="" style="labelPosition=right;align=left;strokeWidth=1;shape=mxgraph.mockup.markup.curlyBrace;html=1;shadow=0;dashed=0;strokeColor=#999999;direction=north;" vertex="1" parent="1">
+                <mxCell id="18" value="" style="labelPosition=right;align=left;strokeWidth=1;shape=mxgraph.mockup.markup.curlyBrace;html=1;shadow=0;dashed=0;strokeColor=#999999;direction=north;" parent="1" vertex="1">
                     <mxGeometry x="620" y="85" width="20" height="100" as="geometry"/>
                 </mxCell>
             </root>

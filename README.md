@@ -2,6 +2,14 @@
 
 Benchmark realtime speaker diarization systems (DIART, Streaming Sortformer) on standard datasets.
 
+
+## Architecture
+
+### Evaluation Pipeline Overview
+
+![Evaluation Pipeline Overview](docs/evaluation_pipeline_overview.svg)
+
+
 ## Quick Start
 
 ### Running Evaluation
@@ -97,8 +105,8 @@ export HF_HOME=/data/streaming-diarization-eval/.hf
 
 **TODO**
 
-diart ensure overlap aware
-diart use padding for first label
+diart ensure overlap aware - done
+diart use padding for first chunk
 
 better report:
 report confidence for each chunk / segment
@@ -106,3 +114,4 @@ report time for each label output
 report number of speakers, overlap 
 
 sortformer output on segment level?
+sortformer use default configutations?
