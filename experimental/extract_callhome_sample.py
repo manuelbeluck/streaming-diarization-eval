@@ -4,7 +4,7 @@ from pathlib import Path
 
 # ====== CONFIGURATION ======
 DATASET_NAME = "eng"  # Language code: "eng", "deu", etc.
-SAMPLE_INDEX = 0      # Which sample to extract
+SAMPLE_INDEX = 1      # Which sample to extract
 OUTPUT_DIR = "callhome_samples"  # Output directory
 
 def create_rttm(timestamps_start, timestamps_end, speakers, file_id="audio"):
