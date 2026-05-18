@@ -98,20 +98,5 @@ Where:
 **Example:** Very High Latency configuration:
 - (340 + 40) × 8 × 0.01 = 30.4 seconds
 
-**Note:** This latency reflects only the input buffering time before processing begins. It does not include computational processing time (see RTF for processing speed).
-   
-export HF_HOME=/data/streaming-diarization-eval/.hf
 
 
-**TODO**
-
-diart ensure overlap aware - done
-diart use padding for first chunk
-
-better report:
-report confidence for each chunk / segment
-report time for each label output
-report number of speakers, overlap 
-
-sortformer output on segment level?
-sortformer use default configutations?

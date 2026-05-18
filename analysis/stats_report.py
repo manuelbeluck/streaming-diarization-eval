@@ -145,6 +145,89 @@ def print_latency_statistics(df: pd.DataFrame) -> None:
     print("="*80)
 
 
+# Buffer fill times (ms) by system family.
+# DiArt steady-state = one step (500 ms); first output requires filling the
+# full 5 s rolling window.  Sortformer always accumulates one chunk (1040 ms).
+_BUFFER_FILL_MS = {
+    'diart_default':        500.0,
+    'diart_custom':         500.0,
+    'streaming_sortformer': 1040.0,
+}
+_FIRST_FILL_MS = {
+    'diart_default':        5000.0,
+    'diart_custom':         5000.0,
+    'streaming_sortformer': 1040.0,
+}
+
+
+def compute_e2e_latency(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute end-to-end latency metrics per recording.
+
+    Two E2E metrics are derived:
+    - ``e2e_steady_ms``      = steady-state buffer fill + mean computational latency
+    - ``e2e_first_output_ms``= first-output buffer fill + peak computational latency
+                               (worst-case time until the very first result)
+
+    Returns a copy of *df* with the two new columns added.
+    """
+    df = df.copy()
+
+    df['buffer_fill_ms'] = df['system'].map(_BUFFER_FILL_MS).fillna(
+        df['step_size_ms'].where(df['step_size_ms'] > 0, 1040.0)
+    )
+    df['first_fill_ms'] = df['system'].map(_FIRST_FILL_MS).fillna(
+        df['buffer_fill_ms'] * 10  # fallback: assume 10× step for window
+    )
+
+    df['e2e_steady_ms']       = df['buffer_fill_ms'] + df['latency_mean_ms']
+    df['e2e_first_output_ms'] = df['first_fill_ms']  + df['peak_latency_ms']
+
+    return df
+
+
+def print_e2e_latency_statistics(df: pd.DataFrame) -> None:
+    """
+    Print end-to-end latency statistics broken down by system.
+
+    Covers three quantities:
+    - Mean computational latency  (pure model forward-pass time)
+    - Steady-state E2E latency    (buffer fill + mean computational)
+    - First-output E2E latency    (window fill + peak computational)
+    """
+    df = compute_e2e_latency(df)
+
+    stats = df.groupby('system').agg(
+        comp_mean_ms=('latency_mean_ms',       'mean'),
+        comp_std_ms= ('latency_std_ms',        'mean'),
+        comp_peak_ms=('peak_latency_ms',       'mean'),
+        e2e_steady_ms      =('e2e_steady_ms',       'mean'),
+        e2e_first_output_ms=('e2e_first_output_ms', 'mean'),
+        buffer_fill_ms     =('buffer_fill_ms',       'first'),
+        first_fill_ms      =('first_fill_ms',         'first'),
+    )
+
+    print("\n" + "="*80)
+    print("END-TO-END LATENCY STATISTICS (milliseconds)")
+    print("="*80)
+    print("Computational latency = wall-clock time for one model forward pass")
+    print("Steady-state E2E      = buffer fill time + mean computational latency")
+    print("First-output E2E      = window fill time + peak computational latency")
+    print("-"*80)
+
+    for system, row in stats.iterrows():
+        print(f"\n{system}:")
+        print(f"  Buffer fill (steady-state):   {row['buffer_fill_ms']:7.0f} ms")
+        print(f"  Window fill (first output):   {row['first_fill_ms']:7.0f} ms")
+        print(f"  Computational latency (mean): {row['comp_mean_ms']:7.1f} ms  "
+              f"(±{row['comp_std_ms']:.1f} ms, peak {row['comp_peak_ms']:.1f} ms)")
+        print(f"  ─────────────────────────────────────────────────────")
+        print(f"  Steady-state E2E:             {row['e2e_steady_ms']:7.1f} ms")
+        print(f"  First-output E2E:             {row['e2e_first_output_ms']:7.1f} ms")
+
+    print("="*80)
+
+
 def print_resource_statistics(df: pd.DataFrame) -> None:
     """
     Print resource usage statistics.

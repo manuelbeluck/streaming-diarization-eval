@@ -3,7 +3,7 @@ import soundfile as sf
 from pathlib import Path
 
 # ====== CONFIGURATION ======
-DATASET_NAME = "eng"  # Language code: "eng", "deu", etc.
+DATASET_NAME = "deu"  # Language code: "eng", "deu", etc.
 SAMPLE_INDEX = 1      # Which sample to extract
 OUTPUT_DIR = "callhome_samples"  # Output directory
 

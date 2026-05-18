@@ -43,3 +43,4 @@ optuna==4.7.0
 tqdm==4.67.3
 soundfile==0.13.1
 wget==3.2
+psutil

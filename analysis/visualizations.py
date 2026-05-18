@@ -189,7 +189,7 @@ def plot_der_vs_overlap(df: pd.DataFrame, figsize=(12, 6)) -> None:
     plt.show()
 
 
-def plot_processing_efficiency(df: pd.DataFrame, figsize=(15, 5)) -> None:
+def plot_processing_efficiency(df: pd.DataFrame, figsize=(12, 6)) -> None:
     """
     Plot processing efficiency metrics (RTF and processing time).
     
@@ -197,33 +197,23 @@ def plot_processing_efficiency(df: pd.DataFrame, figsize=(15, 5)) -> None:
         df: DataFrame with metrics
         figsize: Figure size as (width, height) tuple
     """
-    fig, axes = plt.subplots(1, 2, figsize=figsize)
-    
-    # Box plot for RTF
-    sns.boxplot(data=df, x='system', y='rtf', ax=axes[0], palette='Set2')
-    axes[0].axhline(y=1.0, color='red', linestyle='--', linewidth=2, 
-                    label='Real-time threshold')
-    axes[0].set_title('Real-Time Factor Distribution', fontsize=14, fontweight='bold')
-    axes[0].set_xlabel('System', fontsize=12)
-    axes[0].set_ylabel('Real-Time Factor (RTF)', fontsize=12)
-    axes[0].legend()
-    axes[0].grid(axis='y', alpha=0.3)
+    fig, ax = plt.subplots(figsize=figsize)
     
     # Scatter plot: duration vs wall time
     for system in df['system'].unique():
         system_data = df[df['system'] == system]
-        axes[1].scatter(system_data['duration'], system_data['wall_time_s'], 
-                       label=system, alpha=0.6, s=100, edgecolors='black', linewidth=1)
+        ax.scatter(system_data['duration'], system_data['wall_time_s'], 
+                   label=system, alpha=0.6, s=100, edgecolors='black', linewidth=1)
     
     # Add y=x line (real-time line)
     max_duration = df['duration'].max()
-    axes[1].plot([0, max_duration], [0, max_duration], 'r--', linewidth=2, 
-                 label='Real-time (1:1)')
-    axes[1].set_title('Processing Time vs Audio Duration', fontsize=14, fontweight='bold')
-    axes[1].set_xlabel('Audio Duration (s)', fontsize=12)
-    axes[1].set_ylabel('Wall Time (s)', fontsize=12)
-    axes[1].legend()
-    axes[1].grid(alpha=0.3)
+    ax.plot([0, max_duration], [0, max_duration], 'r--', linewidth=2, 
+            label='Real-time (1:1)')
+    ax.set_title('Processing Time vs Audio Duration', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Audio Duration (s)', fontsize=12)
+    ax.set_ylabel('Wall Time (s)', fontsize=12)
+    ax.legend()
+    ax.grid(alpha=0.3)
     
     plt.tight_layout()
     plt.show()
